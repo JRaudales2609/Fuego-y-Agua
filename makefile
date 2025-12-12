@@ -1,30 +1,54 @@
-# Directorios de origen y destino
-SRC_DIR := src
-BIN_DIR := bin
+.SUFFIXES:
+.PHONY: all clean run info
 
-SFML := -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -lbox2d
+CXX := g++
+CXXFLAGS := -std=c++17 -I include
+LDFLAGS := -L lib -lsfml-graphics -lsfml-window -lsfml-system
+TARGET := FuegoYAgua.exe
+SOURCES := src/main.cpp src/Menu.cpp src/LevelSelector.cpp src/PauseMenu.cpp src/Level.cpp src/game.cpp
 
-# Obtener todos los archivos .cpp en el directorio de origen
-CPP_FILES := $(wildcard $(SRC_DIR)/*.cpp)
+all: $(TARGET)
 
-# Generar los nombres de los archivos .exe en el directorio de destino
-EXE_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%.exe,$(CPP_FILES))
+$(TARGET): $(SOURCES)
+	@echo ""
+	@echo "========================================"
+	@echo "  Compilando Fuego y Agua..."
+	@echo "========================================"
+	@echo ""
+	$(CXX) $(SOURCES) -o $(TARGET) $(CXXFLAGS) $(LDFLAGS)
+	@echo ""
+	@echo "========================================"
+	@echo "  Compilacion exitosa!"
+	@echo "  Ejecuta: make run"
+	@echo "========================================"
+	@echo ""
 
-# Regla para compilar cada archivo .cpp y generar el archivo .exe correspondiente
-$(BIN_DIR)/%.exe: $(SRC_DIR)/%.cpp
-	@mkdir -p $(BIN_DIR)
-	g++ $< -o $@ $(SFML) -Iinclude
-
-# Regla por defecto para compilar todos los archivos .cpp
-all: $(EXE_FILES)
-
-# Regla para ejecutar cada archivo .exe
-run%: $(BIN_DIR)/%.exe
-	./$<
-
-# Regla para limpiar los archivos generados
 clean:
-	rm -f $(EXE_FILES)
+	@echo "Limpiando archivos..."
+	@rm -f $(TARGET) 2>/dev/null || true
+	@echo "Limpieza completada"
 
-.PHONY: all clean
-.PHONY: run-%
+run: $(TARGET)
+	@echo ""
+	@echo "========================================"
+	@echo "  Ejecutando Fuego y Agua..."
+	@echo "========================================"
+	@echo ""
+	@./$(TARGET)
+
+info:
+	@echo "========================================"
+	@echo "  Informacion del proyecto"
+	@echo "========================================"
+	@echo "Archivos a compilar:"
+	@echo "  - src/main.cpp"
+	@echo "  - src/Menu.cpp"
+	@echo "  - src/LevelSelector.cpp"
+	@echo "  - src/PauseMenu.cpp"
+	@echo "  - src/Level.cpp"
+	@echo "  - src/game.cpp"
+	@echo ""
+	@echo "Compilador: $(CXX)"
+	@echo "Flags: $(CXXFLAGS)"
+	@echo "Librerias: $(LDFLAGS)"
+	@echo ""
