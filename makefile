@@ -4,7 +4,7 @@
 CXX := g++
 CXXFLAGS := -std=c++17 -I include
 LDFLAGS := -L lib -lsfml-graphics -lsfml-window -lsfml-system
-TARGET := FuegoYAgua.exe
+TARGET := bin/FuegoYAgua.exe
 SOURCES := src/main.cpp src/Menu.cpp src/LevelSelector.cpp src/PauseMenu.cpp src/WinMenu.cpp src/Level.cpp src/game.cpp
 
 all: $(TARGET)
@@ -15,6 +15,7 @@ $(TARGET): $(SOURCES)
 	@echo "  Compilando Fuego y Agua..."
 	@echo "========================================"
 	@echo ""
+	@mkdir -p bin
 	$(CXX) $(SOURCES) -o $(TARGET) $(CXXFLAGS) $(LDFLAGS)
 	@echo ""
 	@echo "========================================"
@@ -34,7 +35,7 @@ run: $(TARGET)
 	@echo "  Ejecutando Fuego y Agua..."
 	@echo "========================================"
 	@echo ""
-	@./$(TARGET)
+	@.\$(TARGET)
 
 info:
 	@echo "========================================"
