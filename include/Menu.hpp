@@ -26,6 +26,7 @@ public:
     Menu();
     void updatePositions(const sf::Vector2u& windowSize); // NUEVO
     void handleInput(sf::Event& event);
+    void handleClick(const sf::Vector2f& mousePos); // NUEVO - Para clicks con coordenadas transformadas
     void update(const sf::Vector2i& mousePos);
     void render(sf::RenderWindow& window);
     int getSelectedOption() const; // 0 = Comenzar, 1 = Salir, -1 = ninguno

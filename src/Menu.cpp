@@ -75,14 +75,17 @@ Menu::Menu() : selectedButton(-1) {
 }
 
 void Menu::updatePositions(const sf::Vector2u& windowSize) {
-    float centerX = windowSize.x / 2.0f;
-    float centerY = windowSize.y / 2.0f;
+    // SIEMPRE usar coordenadas del juego 1200x800, NO el tamaño físico de ventana
+    const float gameWidth = 1200.0f;
+    const float gameHeight = 800.0f;
+    float centerX = gameWidth / 2.0f;
+    float centerY = gameHeight / 2.0f;
     
     // Actualizar fondo
     if (backgroundTexture.getSize().x > 0) {
         sf::Vector2u texSize = backgroundTexture.getSize();
-        float scaleX = static_cast<float>(windowSize.x) / texSize.x;
-        float scaleY = static_cast<float>(windowSize.y) / texSize.y;
+        float scaleX = gameWidth / texSize.x;
+        float scaleY = gameHeight / texSize.y;
         backgroundSprite.setScale(scaleX, scaleY);
         backgroundSprite.setPosition(0, 0);
     }
@@ -101,52 +104,46 @@ void Menu::updatePositions(const sf::Vector2u& windowSize) {
         );
     }
     
-    // Actualizar sprite del botón de salir - MÁS GRANDE
+    // Actualizar sprite del botón de salir - MÁS GRANDE (coordenadas fijas)
     if (exitButtonTexture.getSize().x > 0) {
-        float scale = 120.0f / exitButtonTexture.getSize().x; // Aumentado de 80 a 120
+        float scale = 120.0f / exitButtonTexture.getSize().x;
         exitButtonSprite.setScale(scale, scale);
-        exitButtonSprite.setPosition(50, windowSize.y - 130); // Ajustar posición
+        exitButtonSprite.setPosition(50, 670); // Coordenadas fijas (800 - 130)
     }
     
     // Actualizar botón SALIR (esquina inferior izquierda)
-    buttons[0].setPosition(50, windowSize.y - 130); // Ajustar posición
+    buttons[0].setPosition(50, 670); // Coordenadas fijas
     
     sf::FloatRect exitTextBounds = buttonTexts[0].getLocalBounds();
     buttonTexts[0].setOrigin(exitTextBounds.width / 2, exitTextBounds.height / 2);
-    buttonTexts[0].setPosition(170, windowSize.y - 65); // Ajustar posición
+    buttonTexts[0].setPosition(170, 735); // Coordenadas fijas (800 - 65)
 }
 
 void Menu::handleInput(sf::Event& event) {
-    if (event.type == sf::Event::MouseButtonPressed) {
-        if (event.mouseButton.button == sf::Mouse::Left) {
-            // Verificar click en botón de inicio (sprite circular)
-            if (startButtonTexture.getSize().x > 0) {
-                if (startButtonSprite.getGlobalBounds().contains(
-                    static_cast<float>(event.mouseButton.x),
-                    static_cast<float>(event.mouseButton.y))) {
-                    selectedButton = 0; // COMENZAR
-                    std::cout << "Botón de inicio clickeado" << std::endl;
-                    return;
-                }
-            }
-            
-            // Verificar click en botón SALIR (sprite o rectángulo)
-            if (exitButtonTexture.getSize().x > 0) {
-                if (exitButtonSprite.getGlobalBounds().contains(
-                    static_cast<float>(event.mouseButton.x),
-                    static_cast<float>(event.mouseButton.y))) {
-                    selectedButton = 1; // SALIR
-                    std::cout << "Botón SALIR clickeado" << std::endl;
-                    return;
-                }
-            } else if (buttons[0].getGlobalBounds().contains(
-                static_cast<float>(event.mouseButton.x),
-                static_cast<float>(event.mouseButton.y))) {
-                selectedButton = 1; // SALIR
-                std::cout << "Botón SALIR clickeado" << std::endl;
-                return;
-            }
+    // Método obsoleto - usar handleClick con coordenadas transformadas
+}
+
+void Menu::handleClick(const sf::Vector2f& mousePos) {
+    // Verificar click en botón de inicio (sprite circular)
+    if (startButtonTexture.getSize().x > 0) {
+        if (startButtonSprite.getGlobalBounds().contains(mousePos)) {
+            selectedButton = 0; // COMENZAR
+            std::cout << "Botón de inicio clickeado" << std::endl;
+            return;
         }
+    }
+    
+    // Verificar click en botón SALIR (sprite o rectángulo)
+    if (exitButtonTexture.getSize().x > 0) {
+        if (exitButtonSprite.getGlobalBounds().contains(mousePos)) {
+            selectedButton = 1; // SALIR
+            std::cout << "Botón SALIR clickeado" << std::endl;
+            return;
+        }
+    } else if (buttons[0].getGlobalBounds().contains(mousePos)) {
+        selectedButton = 1; // SALIR
+        std::cout << "Botón SALIR clickeado" << std::endl;
+        return;
     }
 }
 

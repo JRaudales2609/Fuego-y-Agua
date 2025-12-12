@@ -1,9 +1,12 @@
 #include <SFML/Graphics.hpp>
 #include "../include/Game.hpp"
+#include "../include/ViewUtils.hpp"
 #include <iostream>
 
-Game::Game(int startingLevel) :
-    window(sf::VideoMode(1200, 800), "Fuego y Agua - 2 Jugadores"),
+Game::Game(int startingLevel, bool fullscreen) :
+    window(fullscreen ? sf::VideoMode::getDesktopMode() : sf::VideoMode(1200, 800), 
+           "Fuego y Agua - 2 Jugadores", 
+           fullscreen ? sf::Style::Fullscreen : sf::Style::Default),
     currentLevel(startingLevel),
     speed(7.0f),
     gravity(0.5f),
@@ -29,6 +32,13 @@ Game::Game(int startingLevel) :
 {
     std::cout << "Iniciando juego en nivel " << startingLevel << std::endl;
     window.setFramerateLimit(60);
+    
+    // Vista fija de 1200x800 con letterboxing
+    gameView = sf::View(sf::FloatRect(0, 0, 1200, 800));
+    gameView = getLetterboxView(gameView, window.getSize().x, window.getSize().y);
+    window.setView(gameView);
+    
+    std::cout << "Vista configurada - Ventana: " << window.getSize().x << "x" << window.getSize().y << std::endl;
 
     // Cargar el nivel
     currentLevel.loadLevel();
@@ -174,6 +184,9 @@ Game::Game(int startingLevel) :
         pauseButtonSprite.setPosition(1130, 10);
     }
     
+    // Inicializar posiciones del menú de pausa (usar coordenadas fijas del juego)
+    pauseMenu.updatePositions(sf::Vector2u(1200, 800));
+    
     std::cout << "Juego inicializado con menu de pausa" << std::endl;
 }
 
@@ -189,10 +202,8 @@ void Game::run()
 
 void Game::processEvents()
 {
-    // Actualizar posiciones del menú de pausa si está pausado
-    if (isPaused) {
-        pauseMenu.updatePositions(window.getSize());
-    }
+    // NO actualizar posiciones del menú de pausa basándose en el tamaño de ventana
+    // El menú de pausa debe usar las coordenadas fijas del juego (1200x800)
     
     sf::Event event;
     while (window.pollEvent(event))
@@ -200,9 +211,23 @@ void Game::processEvents()
         if (event.type == sf::Event::Closed)
             window.close();
         
+        // Manejar redimensión de ventana (maximizar, restaurar, arrastrar bordes)
+        if (event.type == sf::Event::Resized) {
+            gameView = sf::View(sf::FloatRect(0, 0, 1200, 800));
+            gameView = getLetterboxView(gameView, event.size.width, event.size.height);
+            window.setView(gameView);
+            std::cout << "Ventana del juego redimensionada: " << event.size.width << "x" << event.size.height << std::endl;
+        }
+        
         if (isPaused) {
-            // Si está en pausa, solo manejar eventos del menú de pausa
-            pauseMenu.handleInput(event);
+            // Si está en pausa, manejar clicks con coordenadas transformadas
+            if (event.type == sf::Event::MouseButtonPressed) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
+                    sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
+                    pauseMenu.handleClick(worldPos);
+                }
+            }
         } else {
             // Juego no pausado
             if (event.type == sf::Event::KeyPressed) {
@@ -238,8 +263,10 @@ void Game::processEvents()
             // Click en botón de pausa
             else if (event.type == sf::Event::MouseButtonPressed) {
                 if (event.mouseButton.button == sf::Mouse::Left) {
-                    sf::Vector2f mousePos(static_cast<float>(event.mouseButton.x),
-                                         static_cast<float>(event.mouseButton.y));
+                    // Transformar coordenadas del mouse a coordenadas del juego
+                    sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
+                    sf::Vector2f mousePos = window.mapPixelToCoords(pixelPos);
+                    
                     if (pauseButton.getGlobalBounds().contains(mousePos)) {
                         isPaused = true;
                         pauseMenu.resetSelection();
@@ -254,8 +281,10 @@ void Game::processEvents()
 void Game::update()
 {
     if (isPaused) {
-        // Actualizar menú de pausa
-        pauseMenu.update(sf::Mouse::getPosition(window));
+        // Actualizar menú de pausa con coordenadas transformadas
+        sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+        sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
+        pauseMenu.update(sf::Vector2i(static_cast<int>(worldPos.x), static_cast<int>(worldPos.y)));
         
         int selectedOption = pauseMenu.getSelectedOption();
         if (selectedOption == 0) { // Reanudar
@@ -510,10 +539,8 @@ void Game::resetGame()
 
 void Game::render()
 {
+    window.setView(gameView);  // Asegurar que la vista esté activa
     window.clear(sf::Color::Black);
-    
-    // Obtener tamaño de ventana
-    sf::Vector2u windowSize = window.getSize();
     
     currentLevel.render(window);
     
@@ -551,12 +578,12 @@ void Game::render()
     mouseCoordText.setPosition(10.0f, 10.0f);
     window.draw(mouseCoordText);
     
-    // Actualizar posición del botón de pausa (siempre en esquina superior derecha)
-    pauseButton.setPosition(windowSize.x - 60.0f, 10.0f);
+    // Botón de pausa SIEMPRE en (1130, 10) - coordenadas del juego fijas
+    pauseButton.setPosition(1130.0f, 10.0f);
     
     // Si hay textura, dibujar el sprite; si no, solo el botón
     if (pauseButtonTexture.getSize().x > 0) {
-        pauseButtonSprite.setPosition(windowSize.x - 60.0f, 10.0f);
+        pauseButtonSprite.setPosition(1130.0f, 10.0f);
         window.draw(pauseButtonSprite);
     } else {
         // Fallback: dibujar botón con fondo y texto "| |"
@@ -566,7 +593,7 @@ void Game::render()
         fallbackIcon.setString("| |");
         fallbackIcon.setCharacterSize(30);
         fallbackIcon.setFillColor(sf::Color::White);
-        fallbackIcon.setPosition(windowSize.x - 48.0f, 18.0f);
+        fallbackIcon.setPosition(1142.0f, 18.0f);
         window.draw(fallbackIcon);
     }
     

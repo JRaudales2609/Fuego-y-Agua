@@ -8,6 +8,7 @@
 class Game {
 private:
     sf::RenderWindow window;
+    sf::View gameView;  // Vista fija de 1200x800
     Level currentLevel;
     
     // Texturas
@@ -66,7 +67,7 @@ private:
     sf::Sprite pauseButtonSprite;  // NUEVO - Reemplaza pauseIcon
     
 public:
-    Game(int startingLevel = 1);
+    Game(int startingLevel = 1, bool fullscreen = false);
     void run();
     void processEvents();
     void update();

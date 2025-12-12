@@ -70,17 +70,16 @@ PauseMenu::PauseMenu() : selectedOption(-1) {
 }
 
 void PauseMenu::handleInput(sf::Event& event) {
-    if (event.type == sf::Event::MouseButtonPressed) {
-        if (event.mouseButton.button == sf::Mouse::Left) {
-            for (size_t i = 0; i < buttons.size(); i++) {
-                if (buttons[i].getGlobalBounds().contains(
-                    static_cast<float>(event.mouseButton.x),
-                    static_cast<float>(event.mouseButton.y))) {
-                    selectedOption = static_cast<int>(i);
-                    std::cout << "Opción de pausa seleccionada: " << i << std::endl;
-                    return;
-                }
-            }
+    // Este método ya no debería usarse directamente con eventos
+    // Las coordenadas del mouse deben ser transformadas antes de llegar aquí
+}
+
+void PauseMenu::handleClick(const sf::Vector2f& mousePos) {
+    for (size_t i = 0; i < buttons.size(); i++) {
+        if (buttons[i].getGlobalBounds().contains(mousePos)) {
+            selectedOption = static_cast<int>(i);
+            std::cout << "Opción de pausa seleccionada: " << i << std::endl;
+            return;
         }
     }
 }
@@ -128,19 +127,22 @@ void PauseMenu::update(const sf::Vector2i& mousePos) {
 }
 
 void PauseMenu::updatePositions(const sf::Vector2u& windowSize) {
-    float centerX = windowSize.x / 2.0f;
+    // SIEMPRE usar coordenadas del juego 1200x800, NO el tamaño físico de ventana
+    const float gameWidth = 1200.0f;
+    const float gameHeight = 800.0f;
+    float centerX = gameWidth / 2.0f;
     float buttonWidth = 300;
     float buttonHeight = 70;
-    float startY = windowSize.y * 0.45f;
+    float startY = gameHeight * 0.45f;
     float spacing = 100;
     
-    // Actualizar overlay
-    overlay.setSize(sf::Vector2f(static_cast<float>(windowSize.x), static_cast<float>(windowSize.y)));
+    // Actualizar overlay (tamaño del juego)
+    overlay.setSize(sf::Vector2f(gameWidth, gameHeight));
     
     // Actualizar título
     sf::FloatRect titleBounds = title.getLocalBounds();
     title.setOrigin(titleBounds.width / 2, titleBounds.height / 2);
-    title.setPosition(centerX, windowSize.y * 0.3f);
+    title.setPosition(centerX, gameHeight * 0.3f);
     
     // Actualizar botones
     for (size_t i = 0; i < buttons.size(); i++) {

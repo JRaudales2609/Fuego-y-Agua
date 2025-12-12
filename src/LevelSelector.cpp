@@ -71,19 +71,22 @@ LevelSelector::LevelSelector() : selectedLevel(-1) {
 }
 
 void LevelSelector::updatePositions(const sf::Vector2u& windowSize) {
-    float centerX = windowSize.x / 2.0f;
+    // SIEMPRE usar coordenadas del juego 1200x800, NO el tamaño físico de ventana
+    const float gameWidth = 1200.0f;
+    const float gameHeight = 800.0f;
+    float centerX = gameWidth / 2.0f;
     float buttonWidth = 350;
     float buttonHeight = 400;
     float spacing = 100;
     float totalWidth = (buttonWidth * 2) + spacing;
     float startX = centerX - (totalWidth / 2);
-    float yPos = windowSize.y * 0.25f;
+    float yPos = gameHeight * 0.25f;
     
     // Actualizar fondo
     if (backgroundTexture.getSize().x > 0) {
         sf::Vector2u texSize = backgroundTexture.getSize();
-        float scaleX = static_cast<float>(windowSize.x) / texSize.x;
-        float scaleY = static_cast<float>(windowSize.y) / texSize.y;
+        float scaleX = gameWidth / texSize.x;
+        float scaleY = gameHeight / texSize.y;
         backgroundSprite.setScale(scaleX, scaleY);
         backgroundSprite.setPosition(0, 0);
     }
@@ -91,7 +94,7 @@ void LevelSelector::updatePositions(const sf::Vector2u& windowSize) {
     // Actualizar título
     sf::FloatRect titleBounds = title.getLocalBounds();
     title.setOrigin(titleBounds.width / 2, titleBounds.height / 2);
-    title.setPosition(centerX, windowSize.y * 0.12f);
+    title.setPosition(centerX, gameHeight * 0.12f);
     
     // Actualizar botones de niveles
     for (int i = 0; i < 2; i++) {
@@ -113,48 +116,44 @@ void LevelSelector::updatePositions(const sf::Vector2u& windowSize) {
         levelTexts[i].setPosition(xPos + buttonWidth / 2, yPos + buttonHeight - 50);
     }
     
-    // Actualizar sprite del botón de salir - MÁS GRANDE
+    // Actualizar sprite del botón de salir - MÁS GRANDE (coordenadas fijas)
     if (exitButtonTexture.getSize().x > 0) {
-        float scale = 120.0f / exitButtonTexture.getSize().x; // Aumentado de 80 a 120
+        float scale = 120.0f / exitButtonTexture.getSize().x;
         exitButtonSprite.setScale(scale, scale);
-        exitButtonSprite.setPosition(50, windowSize.y - 130); // Ajustar posición
+        exitButtonSprite.setPosition(50, 670); // Coordenadas fijas (800 - 130)
     }
     
-    // Actualizar botón ATRÁS
-    levelButtons[2].setPosition(50, windowSize.y - 130); // Ajustar posición
+    // Actualizar botón ATRÁS (coordenadas fijas)
+    levelButtons[2].setPosition(50, 670); // Coordenadas fijas (800 - 130)
     sf::FloatRect backTextBounds = levelTexts[2].getLocalBounds();
     levelTexts[2].setOrigin(backTextBounds.width / 2, backTextBounds.height / 2);
-    levelTexts[2].setPosition(170, windowSize.y - 65); // Ajustar posición
+    levelTexts[2].setPosition(170, 735); // Coordenadas fijas (800 - 65)
 }
 
 void LevelSelector::handleInput(sf::Event& event) {
-    if (event.type == sf::Event::MouseButtonPressed) {
-        if (event.mouseButton.button == sf::Mouse::Left) {
-            for (size_t i = 0; i < levelButtons.size(); i++) {
-                bool clicked = false;
-                
-                // Si es el botón de atrás y tiene textura
-                if (i == 2 && exitButtonTexture.getSize().x > 0) {
-                    clicked = exitButtonSprite.getGlobalBounds().contains(
-                        static_cast<float>(event.mouseButton.x),
-                        static_cast<float>(event.mouseButton.y));
-                } else {
-                    clicked = levelButtons[i].getGlobalBounds().contains(
-                        static_cast<float>(event.mouseButton.x),
-                        static_cast<float>(event.mouseButton.y));
-                }
-                
-                if (clicked) {
-                    if (i < 2) {
-                        selectedLevel = i + 1;
-                        std::cout << "Nivel " << selectedLevel << " seleccionado" << std::endl;
-                    } else {
-                        selectedLevel = -2; // Atrás
-                        std::cout << "Volver al menú principal" << std::endl;
-                    }
-                    return;
-                }
+    // Método obsoleto - usar handleClick con coordenadas transformadas
+}
+
+void LevelSelector::handleClick(const sf::Vector2f& mousePos) {
+    for (size_t i = 0; i < levelButtons.size(); i++) {
+        bool clicked = false;
+        
+        // Si es el botón de atrás y tiene textura
+        if (i == 2 && exitButtonTexture.getSize().x > 0) {
+            clicked = exitButtonSprite.getGlobalBounds().contains(mousePos);
+        } else {
+            clicked = levelButtons[i].getGlobalBounds().contains(mousePos);
+        }
+        
+        if (clicked) {
+            if (i < 2) {
+                selectedLevel = i + 1;
+                std::cout << "Nivel " << selectedLevel << " seleccionado" << std::endl;
+            } else {
+                selectedLevel = -2; // Atrás
+                std::cout << "Volver al menú principal" << std::endl;
             }
+            return;
         }
     }
 }
