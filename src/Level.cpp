@@ -144,7 +144,7 @@ void Level::setupLevel1() {
     }
     
     // Plataforma superior - desde pared izquierda hasta X=217
-    for(int x = 50, y = 350; x <= 150; x += 50) {
+    for(int x = 50, y = 353; x <= 150; x += 50) {
         addBlock("platform", x, y);
     }
     

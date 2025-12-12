@@ -321,6 +321,7 @@ void Game::update()
             hasWon = false;
             winner = 0;
             winMenu.resetSelection();
+            elapsedTime = sf::Time::Zero;
             gameClock.restart(); // Reiniciar cronómetro
             std::cout << "Reiniciando nivel desde victoria..." << std::endl;
         } else if (selectedOption == 1) { // Salir
@@ -346,6 +347,7 @@ void Game::update()
             resetGame();
             isPaused = false;
             pauseMenu.resetSelection();
+            elapsedTime = sf::Time::Zero;
             gameClock.restart(); // Reiniciar cronómetro
             std::cout << "Reiniciando nivel..." << std::endl;
         } else if (selectedOption == 2) { // Salir
