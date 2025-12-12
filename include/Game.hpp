@@ -68,7 +68,6 @@ private:
     
     // UI
     sf::Font font;
-    sf::Text mouseCoordText;
     
     // Cronómetro
     sf::Clock gameClock;

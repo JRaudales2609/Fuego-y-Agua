@@ -56,11 +56,6 @@ Game::Game(int startingLevel, bool fullscreen) :
             std::cerr << "Advertencia: No se pudo cargar la fuente" << std::endl;
         }
     }
-    mouseCoordText.setFont(font);
-    mouseCoordText.setCharacterSize(20);
-    mouseCoordText.setFillColor(sf::Color::White);
-    mouseCoordText.setPosition(10.0f, 10.0f);
-    
     // Configurar cronómetro
     timerText.setFont(font);
     timerText.setCharacterSize(40);
@@ -398,10 +393,6 @@ void Game::update()
     sf::FloatRect timerBounds = timerText.getLocalBounds();
     timerText.setOrigin(timerBounds.width / 2, 0);
     
-    // Obtener posición del mouse y mostrarla en pantalla
-    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-    mouseCoordText.setString("Mouse: X=" + std::to_string(mousePos.x) + " Y=" + std::to_string(mousePos.y));
-
     // === POWER-UPS: Verificar duración (2 segundos) ===
     if (player1PowerUpActive && player1PowerUpClock.getElapsedTime().asSeconds() >= 2.0f) {
         player1PowerUpActive = false;
@@ -859,10 +850,6 @@ void Game::render()
         mud.setPosition(pos);
         window.draw(mud);
     }
-    
-    // Actualizar posición del texto de coordenadas
-    mouseCoordText.setPosition(10.0f, 10.0f);
-    window.draw(mouseCoordText);
     
     // Dibujar cronómetro (centrado arriba)
     window.draw(timerText);
