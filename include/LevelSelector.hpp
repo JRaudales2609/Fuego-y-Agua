@@ -18,6 +18,9 @@ private:
     sf::Texture backgroundTexture;
     sf::Sprite backgroundSprite;
     
+    sf::Texture titleTexture;       // NUEVO - Imagen del título
+    sf::Sprite titleSprite;         // NUEVO
+    
     sf::Texture exitButtonTexture;  // NUEVO
     sf::Sprite exitButtonSprite;    // NUEVO
     

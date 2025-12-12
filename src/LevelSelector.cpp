@@ -14,7 +14,15 @@ LevelSelector::LevelSelector() : selectedLevel(-1) {
         backgroundSprite.setTexture(backgroundTexture);
     }
     
-    // Título
+    // Cargar imagen del título
+    if (titleTexture.loadFromFile("assets/imagenes/ui/level_selector_title.png")) {
+        titleSprite.setTexture(titleTexture);
+        std::cout << "✓ Imagen del título 'Selecciona Nivel' cargada" << std::endl;
+    } else {
+        std::cerr << "Advertencia: No se pudo cargar level_selector_title.png, usando texto" << std::endl;
+    }
+    
+    // Título (fallback si no hay imagen)
     title.setFont(font);
     title.setString("SELECCIONA UN NIVEL");
     title.setCharacterSize(60);
@@ -114,9 +122,20 @@ void LevelSelector::updatePositions(const sf::Vector2u& windowSize) {
     }
     
     // Actualizar título
-    sf::FloatRect titleBounds = title.getLocalBounds();
-    title.setOrigin(titleBounds.width / 2, titleBounds.height / 2);
-    title.setPosition(centerX, gameHeight * 0.12f);
+    if (titleTexture.getSize().x > 0) {
+        // Usar imagen del título
+        sf::Vector2u texSize = titleTexture.getSize();
+        float scale = 600.0f / texSize.x; // Ancho de 600px para el título
+        titleSprite.setScale(scale, scale);
+        sf::FloatRect titleBounds = titleSprite.getLocalBounds();
+        titleSprite.setOrigin(titleBounds.width / 2, titleBounds.height / 2);
+        titleSprite.setPosition(centerX, gameHeight * 0.12f);
+    } else {
+        // Fallback: usar texto
+        sf::FloatRect titleBounds = title.getLocalBounds();
+        title.setOrigin(titleBounds.width / 2, titleBounds.height / 2);
+        title.setPosition(centerX, gameHeight * 0.12f);
+    }
     
     // Actualizar botones de niveles
     for (int i = 0; i < 2; i++) {
@@ -234,8 +253,12 @@ void LevelSelector::render(sf::RenderWindow& window) {
     overlay.setFillColor(sf::Color(0, 0, 0, 0)); // Transparencia en 0
     window.draw(overlay);
     
-    // Dibujar título
-    window.draw(title);
+    // Dibujar título (imagen o texto como fallback)
+    if (titleTexture.getSize().x > 0) {
+        window.draw(titleSprite);
+    } else {
+        window.draw(title);
+    }
     
     // Dibujar botones de niveles
     for (int i = 0; i < 2; i++) {
