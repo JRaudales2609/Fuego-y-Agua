@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include "../include/Game.hpp"
 #include "../include/ViewUtils.hpp"
+#include "../include/WinMenu.hpp"
 #include <iostream>
 
 Game::Game(int startingLevel, bool fullscreen) :
@@ -28,7 +29,9 @@ Game::Game(int startingLevel, bool fullscreen) :
     frameTime(0.1f),
     baseScale1(0.0f),
     baseScale2(0.0f),
-    isPaused(false)
+    isPaused(false),
+    hasWon(false),
+    winner(0)
 {
     std::cout << "Iniciando juego en nivel " << startingLevel << std::endl;
     window.setFramerateLimit(60);
@@ -53,6 +56,20 @@ Game::Game(int startingLevel, bool fullscreen) :
     mouseCoordText.setCharacterSize(20);
     mouseCoordText.setFillColor(sf::Color::White);
     mouseCoordText.setPosition(10.0f, 10.0f);
+    
+    // Configurar cronómetro
+    timerText.setFont(font);
+    timerText.setCharacterSize(40);
+    timerText.setFillColor(sf::Color::White);
+    timerText.setOutlineColor(sf::Color::Black);
+    timerText.setOutlineThickness(2);
+    timerText.setString("00:00");
+    // Centrar en la parte superior
+    sf::FloatRect timerBounds = timerText.getLocalBounds();
+    timerText.setOrigin(timerBounds.width / 2, 0);
+    timerText.setPosition(600.0f, 15.0f); // Centrado horizontalmente
+    elapsedTime = sf::Time::Zero;
+    gameClock.restart();
 
     // Cargar texturas de diamantes
     if (!fireDiamondTexture.loadFromFile("assets/imagenes/diamantes/fire_diamond.png")) {
@@ -187,7 +204,10 @@ Game::Game(int startingLevel, bool fullscreen) :
     // Inicializar posiciones del menú de pausa (usar coordenadas fijas del juego)
     pauseMenu.updatePositions(sf::Vector2u(1200, 800));
     
-    std::cout << "Juego inicializado con menu de pausa" << std::endl;
+    // Inicializar posiciones del menú de victoria
+    winMenu.updatePositions(sf::Vector2u(1200, 800));
+    
+    std::cout << "Juego inicializado con menu de pausa y victoria" << std::endl;
 }
 
 void Game::run()
@@ -219,7 +239,16 @@ void Game::processEvents()
             std::cout << "Ventana del juego redimensionada: " << event.size.width << "x" << event.size.height << std::endl;
         }
         
-        if (isPaused) {
+        if (hasWon) {
+            // Si hay victoria, manejar clicks en WinMenu
+            if (event.type == sf::Event::MouseButtonPressed) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2i pixelPos(event.mouseButton.x, event.mouseButton.y);
+                    sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
+                    winMenu.handleClick(worldPos);
+                }
+            }
+        } else if (isPaused) {
             // Si está en pausa, manejar clicks con coordenadas transformadas
             if (event.type == sf::Event::MouseButtonPressed) {
                 if (event.mouseButton.button == sf::Mouse::Left) {
@@ -280,6 +309,27 @@ void Game::processEvents()
 
 void Game::update()
 {
+    if (hasWon) {
+        // Actualizar menú de victoria con coordenadas transformadas
+        sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+        sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
+        winMenu.update(sf::Vector2i(static_cast<int>(worldPos.x), static_cast<int>(worldPos.y)));
+        
+        int selectedOption = winMenu.getSelectedOption();
+        if (selectedOption == 0) { // Reiniciar
+            resetGame();
+            hasWon = false;
+            winner = 0;
+            winMenu.resetSelection();
+            gameClock.restart(); // Reiniciar cronómetro
+            std::cout << "Reiniciando nivel desde victoria..." << std::endl;
+        } else if (selectedOption == 1) { // Salir
+            std::cout << "Saliendo al menu principal desde victoria..." << std::endl;
+            window.close();
+        }
+        return; // No actualizar el juego si hay victoria
+    }
+    
     if (isPaused) {
         // Actualizar menú de pausa con coordenadas transformadas
         sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
@@ -290,11 +340,13 @@ void Game::update()
         if (selectedOption == 0) { // Reanudar
             isPaused = false;
             pauseMenu.resetSelection();
+            gameClock.restart(); // Reiniciar reloj al reanudar
             std::cout << "Reanudando juego..." << std::endl;
         } else if (selectedOption == 1) { // Reiniciar
             resetGame();
             isPaused = false;
             pauseMenu.resetSelection();
+            gameClock.restart(); // Reiniciar cronómetro
             std::cout << "Reiniciando nivel..." << std::endl;
         } else if (selectedOption == 2) { // Salir
             std::cout << "Saliendo al menu principal..." << std::endl;
@@ -302,6 +354,17 @@ void Game::update()
         }
         return; // No actualizar el juego si está pausado
     }
+    
+    // Actualizar cronómetro (solo cuando no está pausado)
+    elapsedTime += gameClock.restart();
+    int minutes = static_cast<int>(elapsedTime.asSeconds()) / 60;
+    int seconds = static_cast<int>(elapsedTime.asSeconds()) % 60;
+    char timeStr[10];
+    sprintf(timeStr, "%02d:%02d", minutes, seconds);
+    timerText.setString(timeStr);
+    // Recentrar el texto (el ancho puede cambiar)
+    sf::FloatRect timerBounds = timerText.getLocalBounds();
+    timerText.setOrigin(timerBounds.width / 2, 0);
     
     // Obtener posición del mouse y mostrarla en pantalla
     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -404,11 +467,33 @@ void Game::update()
     // Colisiones con puertas - Ahora necesitan 2 diamantes cada uno
     if (player1.getGlobalBounds().intersects(door1Hitbox) && player1Diamonds >= 2) {
         std::cout << "Fireboy ha completado el nivel!" << std::endl;
-        window.close();
+        if (!hasWon) {
+            hasWon = true;
+            winner = 1; // Player 1 ganó
+            // Obtener tiempo en formato MM:SS
+            int minutes = static_cast<int>(elapsedTime.asSeconds()) / 60;
+            int seconds = static_cast<int>(elapsedTime.asSeconds()) % 60;
+            char timeStr[10];
+            sprintf(timeStr, "%02d:%02d", minutes, seconds);
+            winMenu.setWinner(1, std::string(timeStr));
+            winMenu.updatePositions(sf::Vector2u(1200, 800));
+            std::cout << "Ganador: Player 1 - Tiempo: " << timeStr << std::endl;
+        }
     }
     if (player2.getGlobalBounds().intersects(door2Hitbox) && player2Diamonds >= 2) {
         std::cout << "Watergirl ha completado el nivel!" << std::endl;
-        window.close();
+        if (!hasWon) {
+            hasWon = true;
+            winner = 2; // Player 2 ganó
+            // Obtener tiempo en formato MM:SS
+            int minutes = static_cast<int>(elapsedTime.asSeconds()) / 60;
+            int seconds = static_cast<int>(elapsedTime.asSeconds()) % 60;
+            char timeStr[10];
+            sprintf(timeStr, "%02d:%02d", minutes, seconds);
+            winMenu.setWinner(2, std::string(timeStr));
+            winMenu.updatePositions(sf::Vector2u(1200, 800));
+            std::cout << "Ganador: Player 2 - Tiempo: " << timeStr << std::endl;
+        }
     }
 
     // Colisiones con obstáculos
@@ -578,6 +663,9 @@ void Game::render()
     mouseCoordText.setPosition(10.0f, 10.0f);
     window.draw(mouseCoordText);
     
+    // Dibujar cronómetro (centrado arriba)
+    window.draw(timerText);
+    
     // Botón de pausa SIEMPRE en (1130, 10) - coordenadas del juego fijas
     pauseButton.setPosition(1130.0f, 10.0f);
     
@@ -600,6 +688,11 @@ void Game::render()
     // Si está pausado, dibujar menú de pausa encima
     if (isPaused) {
         pauseMenu.render(window);
+    }
+    
+    // Si hay victoria, dibujar menú de victoria encima
+    if (hasWon) {
+        winMenu.render(window);
     }
     
     window.display();

@@ -29,27 +29,49 @@ LevelSelector::LevelSelector() : selectedLevel(-1) {
     }
     
     // Crear botones de niveles (se posicionarán en render)
+    // Primero reservar espacio para evitar reubicaciones
+    previewTextures.reserve(2);
+    levelPreviews.reserve(2);
+    
     for (int i = 0; i < 2; i++) {
-        sf::RectangleShape button(sf::Vector2f(350, 400));
-        button.setFillColor(sf::Color(50, 50, 50, 200));
-        button.setOutlineColor(sf::Color::White);
-        button.setOutlineThickness(3);
+        sf::RectangleShape button(sf::Vector2f(450, 300)); // Cambiado a más ancho y menos alto
+        button.setFillColor(sf::Color::Transparent); // Sin relleno
+        button.setOutlineColor(sf::Color::Transparent); // Sin borde
+        button.setOutlineThickness(0); // Sin grosor
         levelButtons.push_back(button);
         
         sf::Text text;
         text.setFont(font);
-        text.setString("NIVEL " + std::to_string(i + 1));
+        text.setString(""); // Sin texto
         text.setCharacterSize(40);
-        text.setFillColor(sf::Color::White);
+        text.setFillColor(sf::Color::Transparent); // Texto invisible
         levelTexts.push_back(text);
         
-        // Preview del nivel
-        sf::Texture previewTex;
-        if (previewTex.loadFromFile("assets/imagenes/niveles/background.png")) {
-            previewTextures.push_back(previewTex);
-            sf::Sprite preview;
-            preview.setTexture(previewTextures[i]);
-            levelPreviews.push_back(preview);
+        // Crear textura en el vector primero
+        previewTextures.push_back(sf::Texture());
+        
+        // Cargar preview específico para cada nivel
+        std::string previewPath = "assets/imagenes/niveles/level" + std::to_string(i + 1) + "_preview.png";
+        std::cout << "================================================" << std::endl;
+        std::cout << "Nivel " << (i + 1) << " - Intentando cargar: " << previewPath << std::endl;
+        
+        if (previewTextures[i].loadFromFile(previewPath)) {
+            std::cout << "✓ ÉXITO: Textura de nivel " << (i + 1) << " cargada" << std::endl;
+            std::cout << "  Dimensiones: " << previewTextures[i].getSize().x << "x" << previewTextures[i].getSize().y << std::endl;
+        } else {
+            std::cerr << "✗ ERROR: No se pudo cargar " << previewPath << std::endl;
+        }
+        std::cout << "================================================" << std::endl;
+        
+        // Crear sprite SIN asignar textura todavía
+        levelPreviews.push_back(sf::Sprite());
+    }
+    
+    // AHORA asignar las texturas a los sprites después de que el vector esté completo
+    for (int i = 0; i < 2; i++) {
+        if (previewTextures[i].getSize().x > 0) {
+            levelPreviews[i].setTexture(previewTextures[i]);
+            std::cout << "Sprite " << (i + 1) << " enlazado a textura correctamente" << std::endl;
         }
     }
     
@@ -75,12 +97,12 @@ void LevelSelector::updatePositions(const sf::Vector2u& windowSize) {
     const float gameWidth = 1200.0f;
     const float gameHeight = 800.0f;
     float centerX = gameWidth / 2.0f;
-    float buttonWidth = 350;
-    float buttonHeight = 400;
-    float spacing = 100;
+    float buttonWidth = 450;  // Cambiado de 350 a 450
+    float buttonHeight = 300; // Cambiado de 400 a 300
+    float spacing = 80;       // Reducido spacing para que quepan mejor
     float totalWidth = (buttonWidth * 2) + spacing;
     float startX = centerX - (totalWidth / 2);
-    float yPos = gameHeight * 0.25f;
+    float yPos = gameHeight * 0.28f; // Ajustado para centrar mejor
     
     // Actualizar fondo
     if (backgroundTexture.getSize().x > 0) {
@@ -103,12 +125,13 @@ void LevelSelector::updatePositions(const sf::Vector2u& windowSize) {
         
         if (i < levelPreviews.size()) {
             sf::Vector2u texSize = previewTextures[i].getSize();
-            float scale = std::min((buttonWidth - 20) / texSize.x, (buttonHeight - 100) / texSize.y);
+            // Escalar para que la imagen llene todo el botón con un pequeño margen
+            float scale = std::min((buttonWidth - 10) / texSize.x, (buttonHeight - 60) / texSize.y);
             levelPreviews[i].setScale(scale, scale);
             
             sf::FloatRect previewBounds = levelPreviews[i].getLocalBounds();
             levelPreviews[i].setOrigin(previewBounds.width / 2, previewBounds.height / 2);
-            levelPreviews[i].setPosition(xPos + buttonWidth / 2, yPos + (buttonHeight - 100) / 2);
+            levelPreviews[i].setPosition(xPos + buttonWidth / 2, yPos + (buttonHeight - 60) / 2);
         }
         
         sf::FloatRect textBounds = levelTexts[i].getLocalBounds();
@@ -182,19 +205,20 @@ void LevelSelector::update(const sf::Vector2i& mousePos) {
         }
         
         if (hover) {
-            levelButtons[i].setFillColor(sf::Color(100, 100, 100, 220));
-            levelButtons[i].setOutlineColor(sf::Color(255, 140, 0));
-            levelButtons[i].setOutlineThickness(5);
-            levelTexts[i].setFillColor(sf::Color(255, 140, 0));
-        } else {
-            if (i < 2) {
-                levelButtons[i].setFillColor(sf::Color(50, 50, 50, 200));
-            } else {
-                levelButtons[i].setFillColor(sf::Color(80, 80, 80, 200));
+            // Efecto hover: Escalar la imagen ligeramente más grande
+            if (i < levelPreviews.size() && i < previewTextures.size()) {
+                sf::Vector2u texSize = previewTextures[i].getSize();
+                float scale = std::min((450.0f - 10) / texSize.x, (300.0f - 60) / texSize.y);
+                float hoverScale = scale * 1.05f; // 5% más grande en hover
+                levelPreviews[i].setScale(hoverScale, hoverScale);
             }
-            levelButtons[i].setOutlineColor(sf::Color::White);
-            levelButtons[i].setOutlineThickness(3);
-            levelTexts[i].setFillColor(sf::Color::White);
+        } else {
+            // Estado normal: Escala normal
+            if (i < levelPreviews.size() && i < previewTextures.size()) {
+                sf::Vector2u texSize = previewTextures[i].getSize();
+                float scale = std::min((450.0f - 10) / texSize.x, (300.0f - 60) / texSize.y);
+                levelPreviews[i].setScale(scale, scale);
+            }
         }
     }
 }
@@ -217,6 +241,22 @@ void LevelSelector::render(sf::RenderWindow& window) {
     for (int i = 0; i < 2; i++) {
         window.draw(levelButtons[i]);
         if (i < levelPreviews.size()) {
+            // Debug: imprimir información del sprite solo una vez al inicio
+            static bool debugPrinted = false;
+            if (!debugPrinted) {
+                std::cout << "\n=== DEBUG RENDER NIVEL " << (i + 1) << " ===" << std::endl;
+                std::cout << "Sprite existe: SÍ" << std::endl;
+                std::cout << "Posición: (" << levelPreviews[i].getPosition().x << ", " << levelPreviews[i].getPosition().y << ")" << std::endl;
+                std::cout << "Escala: (" << levelPreviews[i].getScale().x << ", " << levelPreviews[i].getScale().y << ")" << std::endl;
+                std::cout << "Textura válida: " << (levelPreviews[i].getTexture() != nullptr ? "SÍ" : "NO") << std::endl;
+                if (levelPreviews[i].getTexture()) {
+                    std::cout << "Tamaño textura: " << levelPreviews[i].getTexture()->getSize().x << "x" << levelPreviews[i].getTexture()->getSize().y << std::endl;
+                }
+                std::cout << "Color: R=" << (int)levelPreviews[i].getColor().r << " G=" << (int)levelPreviews[i].getColor().g 
+                         << " B=" << (int)levelPreviews[i].getColor().b << " A=" << (int)levelPreviews[i].getColor().a << std::endl;
+                if (i == 1) debugPrinted = true; // Imprimir solo en la primera pasada completa
+            }
+            
             window.draw(levelPreviews[i]);
         }
         window.draw(levelTexts[i]);

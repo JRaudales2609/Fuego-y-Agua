@@ -15,6 +15,9 @@ private:
     
     sf::RectangleShape overlay;
     
+    sf::Texture pauseTitleTexture;     // NUEVO - Imagen del título PAUSA
+    sf::Sprite pauseTitleSprite;       // NUEVO
+    
     sf::Texture resumeButtonTexture;   // NUEVO
     sf::Texture restartButtonTexture;  // NUEVO
     sf::Texture exitButtonTexture;

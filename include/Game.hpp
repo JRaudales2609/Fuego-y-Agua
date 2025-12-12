@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include "Level.hpp"
 #include "PauseMenu.hpp"
+#include "WinMenu.hpp"
 
 class Game {
 private:
@@ -60,11 +61,21 @@ private:
     sf::Font font;
     sf::Text mouseCoordText;
     
+    // Cronómetro
+    sf::Clock gameClock;
+    sf::Time elapsedTime;
+    sf::Text timerText;
+    
     // Menú de pausa
     PauseMenu pauseMenu;
     bool isPaused;
     sf::RectangleShape pauseButton;
     sf::Sprite pauseButtonSprite;  // NUEVO - Reemplaza pauseIcon
+    
+    // Menú de victoria
+    WinMenu winMenu;
+    bool hasWon;
+    int winner; // 1 = Player 1, 2 = Player 2
     
 public:
     Game(int startingLevel = 1, bool fullscreen = false);

@@ -13,7 +13,15 @@ PauseMenu::PauseMenu() : selectedOption(-1) {
     overlay.setSize(sf::Vector2f(1200, 800));
     overlay.setFillColor(sf::Color(0, 0, 0, 200));
     
-    // Título
+    // Cargar imagen del título PAUSA
+    if (pauseTitleTexture.loadFromFile("assets/imagenes/ui/pause_title.png")) {
+        std::cout << "✓ Imagen de título PAUSA cargada" << std::endl;
+        pauseTitleSprite.setTexture(pauseTitleTexture);
+    } else {
+        std::cerr << "Advertencia: No se pudo cargar pause_title.png, usando texto" << std::endl;
+    }
+    
+    // Título (fallback si no hay imagen)
     title.setFont(font);
     title.setString("PAUSA");
     title.setCharacterSize(70);
@@ -139,10 +147,21 @@ void PauseMenu::updatePositions(const sf::Vector2u& windowSize) {
     // Actualizar overlay (tamaño del juego)
     overlay.setSize(sf::Vector2f(gameWidth, gameHeight));
     
-    // Actualizar título
+    // Actualizar imagen del título PAUSA
+    if (pauseTitleTexture.getSize().x > 0) {
+        // Escalar la imagen a un tamaño apropiado (por ejemplo, 300px de ancho)
+        float scale = 300.0f / pauseTitleTexture.getSize().x;
+        pauseTitleSprite.setScale(scale, scale);
+        
+        sf::FloatRect pauseBounds = pauseTitleSprite.getGlobalBounds();
+        pauseTitleSprite.setOrigin(pauseBounds.width / (2 * scale), pauseBounds.height / (2 * scale));
+        pauseTitleSprite.setPosition(centerX, gameHeight * 0.25f);
+    }
+    
+    // Actualizar título de texto (fallback)
     sf::FloatRect titleBounds = title.getLocalBounds();
     title.setOrigin(titleBounds.width / 2, titleBounds.height / 2);
-    title.setPosition(centerX, gameHeight * 0.3f);
+    title.setPosition(centerX, gameHeight * 0.25f);
     
     // Actualizar botones
     for (size_t i = 0; i < buttons.size(); i++) {
@@ -183,7 +202,13 @@ void PauseMenu::updatePositions(const sf::Vector2u& windowSize) {
 
 void PauseMenu::render(sf::RenderWindow& window) {
     window.draw(overlay);
-    window.draw(title);
+    
+    // Dibujar imagen del título PAUSA si existe, sino el texto
+    if (pauseTitleTexture.getSize().x > 0) {
+        window.draw(pauseTitleSprite);
+    } else {
+        window.draw(title);
+    }
     
     for (size_t i = 0; i < buttons.size(); i++) {
         // Si existe la textura, solo dibujar el sprite (sin rectángulo ni texto)
