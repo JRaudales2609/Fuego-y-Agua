@@ -14,6 +14,7 @@ private:
     
     // Texturas
     sf::Texture fireboyTexture, watergirlTexture;
+    sf::Texture smokeTexture, vaporTexture;  // NUEVO - Power-ups
     sf::Texture fireDiamondTexture, waterDiamondTexture;
     sf::Texture fireDoorTexture, waterDoorTexture;
     sf::Texture lavaTexture, waterTexture, mudTexture;
@@ -36,6 +37,14 @@ private:
     bool player2OnGround;
     bool player1DoubleJumpAvailable;
     bool player2DoubleJumpAvailable;
+    
+    // Power-ups (humo y vapor)
+    bool player1PowerUpAvailable;
+    bool player2PowerUpAvailable;
+    bool player1PowerUpActive;
+    bool player2PowerUpActive;
+    sf::Clock player1PowerUpClock;
+    sf::Clock player2PowerUpClock;
     
     // Estado del juego
     int player1Diamonds;

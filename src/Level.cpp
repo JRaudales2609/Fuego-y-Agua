@@ -160,6 +160,11 @@ void Level::setupLevel1() {
     for(int x = 850; x <= 1100; x += 50) {
         addBlock("platform", x, 220);
     }
+    
+    // Pared vertical de bloqueo - desde (1050, 679) hasta el piso
+    for(int y = 679; y <= 729; y += 50) {
+        addBlock("border_vertical", 1050, y);
+    }
 }
 
 void Level::setupLevel2() {

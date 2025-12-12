@@ -31,7 +31,11 @@ Game::Game(int startingLevel, bool fullscreen) :
     baseScale2(0.0f),
     isPaused(false),
     hasWon(false),
-    winner(0)
+    winner(0),
+    player1PowerUpAvailable(true),
+    player2PowerUpAvailable(true),
+    player1PowerUpActive(false),
+    player2PowerUpActive(false)
 {
     std::cout << "Iniciando juego en nivel " << startingLevel << std::endl;
     window.setFramerateLimit(60);
@@ -89,6 +93,12 @@ Game::Game(int startingLevel, bool fullscreen) :
     }
     if (!watergirlTexture.loadFromFile("assets/imagenes/personajes/watergirl_spritesheet.png")) {
         std::cerr << "Error: No se pudo cargar watergirl_spritesheet.png" << std::endl;
+    }
+    if (!smokeTexture.loadFromFile("assets/imagenes/personajes/smoke_spritesheet.png")) {
+        std::cerr << "Error: No se pudo cargar smoke_spritesheet.png" << std::endl;
+    }
+    if (!vaporTexture.loadFromFile("assets/imagenes/personajes/vapor_spritesheet.png")) {
+        std::cerr << "Error: No se pudo cargar vapor_spritesheet.png" << std::endl;
     }
     // Cargar texturas de obstáculos
     if (!lavaTexture.loadFromFile("assets/imagenes/obstaculos/lava.png")) {
@@ -288,6 +298,26 @@ void Game::processEvents()
                         player2DoubleJumpAvailable = false;
                     }
                 }
+                // Power-up Jugador 1 (H - Humo)
+                else if (event.key.code == sf::Keyboard::H) {
+                    if (player1PowerUpAvailable && !player1PowerUpActive) {
+                        player1PowerUpActive = true;
+                        player1PowerUpAvailable = false;
+                        player1PowerUpClock.restart();
+                        player1VelocityY = 0.0f; // Resetear velocidad
+                        std::cout << "¡Jugador 1 activó power-up HUMO!" << std::endl;
+                    }
+                }
+                // Power-up Jugador 2 (Espacio - Vapor)
+                else if (event.key.code == sf::Keyboard::Space) {
+                    if (player2PowerUpAvailable && !player2PowerUpActive) {
+                        player2PowerUpActive = true;
+                        player2PowerUpAvailable = false;
+                        player2PowerUpClock.restart();
+                        player2VelocityY = 0.0f; // Resetear velocidad
+                        std::cout << "¡Jugador 2 activó power-up VAPOR!" << std::endl;
+                    }
+                }
             }
             // Click en botón de pausa
             else if (event.type == sf::Event::MouseButtonPressed) {
@@ -372,75 +402,191 @@ void Game::update()
     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
     mouseCoordText.setString("Mouse: X=" + std::to_string(mousePos.x) + " Y=" + std::to_string(mousePos.y));
 
-    // === FÍSICA: Aplicar gravedad ===
-    player1VelocityY += gravity;
-    player2VelocityY += gravity;
+    // === POWER-UPS: Verificar duración (2 segundos) ===
+    if (player1PowerUpActive && player1PowerUpClock.getElapsedTime().asSeconds() >= 2.0f) {
+        player1PowerUpActive = false;
+        std::cout << "Power-up HUMO de Jugador 1 terminó" << std::endl;
+    }
+    if (player2PowerUpActive && player2PowerUpClock.getElapsedTime().asSeconds() >= 2.0f) {
+        player2PowerUpActive = false;
+        std::cout << "Power-up VAPOR de Jugador 2 terminó" << std::endl;
+    }
+
+    // === FÍSICA: Aplicar gravedad (NO aplicar si power-up está activo) ===
+    if (!player1PowerUpActive) {
+        player1VelocityY += gravity;
+    }
+    if (!player2PowerUpActive) {
+        player2VelocityY += gravity;
+    }
 
     std::vector<sf::FloatRect> platforms = currentLevel.getPlatforms();
 
     // Movimiento y colisiones Jugador 1
     sf::Vector2f player1OldPos = player1.getPosition();
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-        player1.move(-speed, 0.0f);
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-        player1.move(speed, 0.0f);
-
-    for(const auto& platform : platforms) {
-        if (player1.getGlobalBounds().intersects(platform)) {
-            player1.setPosition(player1OldPos);
-            break;
+    
+    if (player1PowerUpActive) {
+        // Movimiento libre en 4 direcciones durante power-up
+        // Probar cada dirección independientemente
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+            player1.move(0.0f, -speed);
+            for(const auto& platform : platforms) {
+                if (player1.getGlobalBounds().intersects(platform)) {
+                    player1.setPosition(player1OldPos.x, player1OldPos.y + 1.0f); // Empujar ligeramente hacia abajo
+                    break;
+                }
+            }
+            player1OldPos = player1.getPosition();
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+            player1.move(0.0f, speed);
+            for(const auto& platform : platforms) {
+                if (player1.getGlobalBounds().intersects(platform)) {
+                    player1.setPosition(player1OldPos);
+                    break;
+                }
+            }
+            player1OldPos = player1.getPosition();
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+            player1.move(-speed, 0.0f);
+            for(const auto& platform : platforms) {
+                if (player1.getGlobalBounds().intersects(platform)) {
+                    player1.setPosition(player1OldPos);
+                    break;
+                }
+            }
+            player1OldPos = player1.getPosition();
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+            player1.move(speed, 0.0f);
+            for(const auto& platform : platforms) {
+                if (player1.getGlobalBounds().intersects(platform)) {
+                    player1.setPosition(player1OldPos);
+                    break;
+                }
+            }
+            player1OldPos = player1.getPosition();
+        }
+    } else {
+        // Movimiento normal horizontal
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+            player1.move(-speed, 0.0f);
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+            player1.move(speed, 0.0f);
+        
+        for(const auto& platform : platforms) {
+            if (player1.getGlobalBounds().intersects(platform)) {
+                player1.setPosition(player1OldPos);
+                break;
+            }
         }
     }
 
-    player1OldPos = player1.getPosition();
-    player1.move(0.0f, player1VelocityY);
-    player1OnGround = false;
-    
-    for(const auto& platform : platforms) {
-        if (player1.getGlobalBounds().intersects(platform)) {
-            if (player1VelocityY > 0) {
-                player1.setPosition(player1OldPos);
-                player1VelocityY = 0.0f;
-                player1OnGround = true;
-                player1DoubleJumpAvailable = false;
-            } else if (player1VelocityY < 0) {
-                player1.setPosition(player1OldPos);
-                player1VelocityY = 0.0f;
+    // Movimiento vertical (solo si NO está en power-up)
+    if (!player1PowerUpActive) {
+        player1OldPos = player1.getPosition();
+        player1.move(0.0f, player1VelocityY);
+        player1OnGround = false;
+        
+        for(const auto& platform : platforms) {
+            if (player1.getGlobalBounds().intersects(platform)) {
+                if (player1VelocityY > 0) {
+                    player1.setPosition(player1OldPos);
+                    player1VelocityY = 0.0f;
+                    player1OnGround = true;
+                    player1DoubleJumpAvailable = false;
+                } else if (player1VelocityY < 0) {
+                    // Empujar ligeramente hacia abajo para evitar quedarse atascado
+                    player1.setPosition(player1OldPos.x, player1OldPos.y + 2.0f);
+                    player1VelocityY = 0.5f; // Pequeña velocidad hacia abajo
+                }
+                break;
             }
-            break;
         }
     }
 
     // Movimiento y colisiones Jugador 2
     sf::Vector2f player2OldPos = player2.getPosition();
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-        player2.move(-speed, 0.0f);
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-        player2.move(speed, 0.0f);
-
-    for(const auto& platform : platforms) {
-        if (player2.getGlobalBounds().intersects(platform)) {
-            player2.setPosition(player2OldPos);
-            break;
+    
+    if (player2PowerUpActive) {
+        // Movimiento libre en 4 direcciones durante power-up
+        // Probar cada dirección independientemente
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+            player2.move(0.0f, -speed);
+            for(const auto& platform : platforms) {
+                if (player2.getGlobalBounds().intersects(platform)) {
+                    player2.setPosition(player2OldPos.x, player2OldPos.y + 1.0f); // Empujar ligeramente hacia abajo
+                    break;
+                }
+            }
+            player2OldPos = player2.getPosition();
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+            player2.move(0.0f, speed);
+            for(const auto& platform : platforms) {
+                if (player2.getGlobalBounds().intersects(platform)) {
+                    player2.setPosition(player2OldPos);
+                    break;
+                }
+            }
+            player2OldPos = player2.getPosition();
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+            player2.move(-speed, 0.0f);
+            for(const auto& platform : platforms) {
+                if (player2.getGlobalBounds().intersects(platform)) {
+                    player2.setPosition(player2OldPos);
+                    break;
+                }
+            }
+            player2OldPos = player2.getPosition();
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+            player2.move(speed, 0.0f);
+            for(const auto& platform : platforms) {
+                if (player2.getGlobalBounds().intersects(platform)) {
+                    player2.setPosition(player2OldPos);
+                    break;
+                }
+            }
+            player2OldPos = player2.getPosition();
+        }
+    } else {
+        // Movimiento normal horizontal
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+            player2.move(-speed, 0.0f);
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+            player2.move(speed, 0.0f);
+        
+        for(const auto& platform : platforms) {
+            if (player2.getGlobalBounds().intersects(platform)) {
+                player2.setPosition(player2OldPos);
+                break;
+            }
         }
     }
 
-    player2OldPos = player2.getPosition();
-    player2.move(0.0f, player2VelocityY);
-    player2OnGround = false;
-    
-    for(const auto& platform : platforms) {
-        if (player2.getGlobalBounds().intersects(platform)) {
-            if (player2VelocityY > 0) {
-                player2.setPosition(player2OldPos);
-                player2VelocityY = 0.0f;
-                player2OnGround = true;
-                player2DoubleJumpAvailable = false;
-            } else if (player2VelocityY < 0) {
-                player2.setPosition(player2OldPos);
-                player2VelocityY = 0.0f;
+    // Movimiento vertical (solo si NO está en power-up)
+    if (!player2PowerUpActive) {
+        player2OldPos = player2.getPosition();
+        player2.move(0.0f, player2VelocityY);
+        player2OnGround = false;
+        
+        for(const auto& platform : platforms) {
+            if (player2.getGlobalBounds().intersects(platform)) {
+                if (player2VelocityY > 0) {
+                    player2.setPosition(player2OldPos);
+                    player2VelocityY = 0.0f;
+                    player2OnGround = true;
+                    player2DoubleJumpAvailable = false;
+                } else if (player2VelocityY < 0) {
+                    // Empujar ligeramente hacia abajo para evitar quedarse atascado
+                    player2.setPosition(player2OldPos.x, player2OldPos.y + 2.0f);
+                    player2VelocityY = 0.5f; // Pequeña velocidad hacia abajo
+                }
+                break;
             }
-            break;
         }
     }
 
@@ -503,27 +649,34 @@ void Game::update()
     std::vector<sf::Vector2f> waterPos = currentLevel.getWaterPositions();
     std::vector<sf::Vector2f> mudPos = currentLevel.getMudPositions();
     
+    // Lava mata a Player 2 (incluso con power-up de vapor)
     for(const auto& pos : lavaPos) {
         sf::FloatRect hitbox(pos.x - 65.0f, pos.y - 15.0f, 130.0f, 30.0f);
         if (player2.getGlobalBounds().intersects(hitbox)) {
             player2.setPosition(currentLevel.getPlayer2StartPos());
+            player2PowerUpActive = false; // Desactivar power-up si muere
         }
     }
     
+    // Agua mata a Player 1 (incluso con power-up de humo)
     for(const auto& pos : waterPos) {
         sf::FloatRect hitbox(pos.x - 65.0f, pos.y - 15.0f, 130.0f, 30.0f);
         if (player1.getGlobalBounds().intersects(hitbox)) {
             player1.setPosition(currentLevel.getPlayer1StartPos());
+            player1PowerUpActive = false; // Desactivar power-up si muere
         }
     }
     
+    // Lodo mata a ambos jugadores (incluso con power-ups)
     for(const auto& pos : mudPos) {
         sf::FloatRect hitbox(pos.x - 65.0f, pos.y - 15.0f, 130.0f, 30.0f);
         if (player1.getGlobalBounds().intersects(hitbox)) {
             player1.setPosition(currentLevel.getPlayer1StartPos());
+            player1PowerUpActive = false;
         }
         if (player2.getGlobalBounds().intersects(hitbox)) {
             player2.setPosition(currentLevel.getPlayer2StartPos());
+            player2PowerUpActive = false;
         }
     }
 
@@ -621,6 +774,12 @@ void Game::resetGame()
     player1VelocityY = 0.0f;
     player2VelocityY = 0.0f;
     
+    // Resetear power-ups
+    player1PowerUpAvailable = true;
+    player2PowerUpAvailable = true;
+    player1PowerUpActive = false;
+    player2PowerUpActive = false;
+    
     std::cout << "Juego reiniciado" << std::endl;
 }
 
@@ -641,8 +800,48 @@ void Game::render()
     if (diamond4Visible) window.draw(diamond4);
     
     // Dibujar jugadores DESPUÉS (por encima de los diamantes)
-    window.draw(player1);
-    window.draw(player2);
+    // Si power-up está activo, crear sprite temporal animado en la misma posición
+    if (player1PowerUpActive) {
+        sf::Sprite smokeSprite;
+        smokeSprite.setTexture(smokeTexture);
+        // Calcular frame igual que los personajes (4 frames)
+        int smokeFrameWidth = smokeTexture.getSize().x / 4;
+        int smokeFrameHeight = smokeTexture.getSize().y;
+        smokeSprite.setTextureRect(sf::IntRect(currentFrame1 * smokeFrameWidth, 0, smokeFrameWidth, smokeFrameHeight));
+        smokeSprite.setOrigin(smokeFrameWidth / 2.0f, smokeFrameHeight / 2.0f);
+        smokeSprite.setPosition(player1.getPosition());
+        float smokeScale = 80.0f / smokeFrameWidth; // Más grande que el jugador
+        // Voltear según la dirección del jugador
+        if (player1.getScale().x < 0) {
+            smokeSprite.setScale(-smokeScale, smokeScale); // Mirando izquierda
+        } else {
+            smokeSprite.setScale(smokeScale, smokeScale); // Mirando derecha
+        }
+        window.draw(smokeSprite);
+    } else {
+        window.draw(player1);
+    }
+    
+    if (player2PowerUpActive) {
+        sf::Sprite vaporSprite;
+        vaporSprite.setTexture(vaporTexture);
+        // Calcular frame igual que los personajes (4 frames)
+        int vaporFrameWidth = vaporTexture.getSize().x / 4;
+        int vaporFrameHeight = vaporTexture.getSize().y;
+        vaporSprite.setTextureRect(sf::IntRect(currentFrame2 * vaporFrameWidth, 0, vaporFrameWidth, vaporFrameHeight));
+        vaporSprite.setOrigin(vaporFrameWidth / 2.0f, vaporFrameHeight / 2.0f);
+        vaporSprite.setPosition(player2.getPosition());
+        float vaporScale = 70.0f / vaporFrameWidth; // Ligeramente más pequeño para evitar colisiones
+        // Voltear según la dirección del jugador
+        if (player2.getScale().x < 0) {
+            vaporSprite.setScale(-vaporScale, vaporScale); // Mirando izquierda
+        } else {
+            vaporSprite.setScale(vaporScale, vaporScale); // Mirando derecha
+        }
+        window.draw(vaporSprite);
+    } else {
+        window.draw(player2);
+    }
     
     std::vector<sf::Vector2f> lavaPos = currentLevel.getLavaPositions();
     std::vector<sf::Vector2f> waterPos = currentLevel.getWaterPositions();
