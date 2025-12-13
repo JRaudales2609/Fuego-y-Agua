@@ -394,11 +394,11 @@ void Game::update()
     timerText.setOrigin(timerBounds.width / 2, 0);
     
     // === POWER-UPS: Verificar duración (2 segundos) ===
-    if (player1PowerUpActive && player1PowerUpClock.getElapsedTime().asSeconds() >= 2.0f) {
+    if (player1PowerUpActive && player1PowerUpClock.getElapsedTime().asSeconds() >= 1.5f) {
         player1PowerUpActive = false;
         std::cout << "Power-up HUMO de Jugador 1 terminó" << std::endl;
     }
-    if (player2PowerUpActive && player2PowerUpClock.getElapsedTime().asSeconds() >= 2.0f) {
+    if (player2PowerUpActive && player2PowerUpClock.getElapsedTime().asSeconds() >= 1.5f) {
         player2PowerUpActive = false;
         std::cout << "Power-up VAPOR de Jugador 2 terminó" << std::endl;
     }
