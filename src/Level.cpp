@@ -149,9 +149,9 @@ void Level::setupLevel1() {
     }
     
     // Plataforma media - desde X=198 hasta X=330
-    addBlock("platform", 200, 220);
-    addBlock("platform", 250, 220);
-    addBlock("platform", 300, 220);
+    addBlock("platform", 200, 200);
+    addBlock("platform", 250, 200);
+    addBlock("platform", 300, 200);
     
     // Plataforma pequeña - centro en (550, 220)
     addBlock("platform", 525, 235);
