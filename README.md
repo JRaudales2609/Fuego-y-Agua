@@ -9,16 +9,16 @@ El objetivo principal de la competición sería recolectar gemas del elemento co
 Lista los controles:
 
 - A/S/D: Movimiento Jugador 1
-- W: salto, presionando dos veces doble salto
+- W: Salto. W + W doble salto
 - Flechas: Movimiento Jugador 2
-- Flechita de para arriba: salto y presionando dos veces doble salto
-- H: powerup de Fireboy 
-- Espacio: powerup de watergirl 
+- ↑ : Salto. ↑ + ↑ doble salto
+- H: PowerUp de Fireboy 
+- Espacio: PowerUp de watergirl 
 
 ### ⚙️ Mecánicas
 
-Agua y Fuego compiten para recolectar Gemas Elementales en un tablero lleno de terreno asimétrico: Agua se mueve rápidamente sobre superficies de agua, y Fuego sobre lava, mientras que ambos sufren penalizaciones en el terreno opuesto.
-Ambos jugadores tendran la habilidad de usar un powerup que durara 2 segundos y solo se podra usar una vez por ronda.
+Agua y Fuego compiten para recolectar Gemas Elementales en un tablero lleno de terreno asimétrico: Agua se mueve rápidamente sobre superficies de agua, y Fuego sobre lava, mientras que ambos sufren penalizaciones en el terreno opuesto y el lodo verde.
+Ambos jugadores tendran la habilidad de usar un powerup que durara 1.5 segundos y solo se podra usar una vez por ronda.
 ### 🏆 Características
 
 - Obstaculos para cada jugador
