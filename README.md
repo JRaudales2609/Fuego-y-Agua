@@ -18,7 +18,7 @@ Lista los controles:
 ### ⚙️ Mecánicas
 
 Agua y Fuego compiten para recolectar Gemas Elementales en un tablero lleno de terreno asimétrico: Agua se mueve rápidamente sobre superficies de agua, y Fuego sobre lava, mientras que ambos sufren penalizaciones en el terreno opuesto y el lodo verde.
-Ambos jugadores tendran la habilidad de usar un powerup que durara 1.5 segundos y solo se podra usar una vez por ronda.
+Ambos jugadores tendran la habilidad de usar un powerup que durara 1.5 segundos y solo se podra usar una vez por ronda. Dicho PowerUp convertira a FireBoy en humo, y a WaterGirl en vapor, lo que les permitira volar volar por el mapa.
 ### 🏆 Características
 
 - Obstaculos para cada jugador
