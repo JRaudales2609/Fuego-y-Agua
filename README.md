@@ -1,21 +1,24 @@
 # Fuego-y-Agua
 ## 📝 Descripción del Proyecto
-
+Fuego y Agua es un juego de aventura y puzles donde dos personajes opuestos compiten en superar obstáculos, usando sus habilidades únicas para llegar a la meta
 
 ### 🎯 Objetivo del Juego
-El objetivo principal de la competición sería recolectar la mayor cantidad de Gemas de Elemento o alcanzar un punto de meta antes que el oponente, superando obstáculos específicos de cada elemento.
+El objetivo principal de la competición sería recolectar gemas del elemento correspondiente al jugador para asi activar el portal y superar el nivel superando obstáculos específicos de cada elemento.
 ### 🎮 Controles
 
 Lista los controles:
 
-- W/A/S/D: Movimiento Jugador 1
+- A/S/D: Movimiento Jugador 1
+- W: salto, presionando dos veces doble salto
 - Flechas: Movimiento Jugador 2
-- Space: Saltar
-
+- Flechita de para arriba: salto y presionando dos veces doble salto
+- H: powerup de Fireboy 
+- Espacio: powerup de watergirl 
 
 ### ⚙️ Mecánicas
 
 Agua y Fuego compiten para recolectar Gemas Elementales en un tablero lleno de terreno asimétrico: Agua se mueve rápidamente sobre superficies de agua, y Fuego sobre lava, mientras que ambos sufren penalizaciones en el terreno opuesto.
+Ambos jugadores tendran la habilidad de usar un powerup que durara 2 segundos y solo se podra usar una vez por ronda.
 ### 🏆 Características
 
 - Obstaculos para cada jugador
